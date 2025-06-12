@@ -33,17 +33,21 @@ def clear_history(reset_col):
         st.session_state.messages = []  # Clear the chat history immediately
         st.rerun()  # Force the app to rerun
 
+
 def add_correction():
     api_token = st.session_state.get("token")
     trace_id = st.session_state.get("trace_id")
     correction_clicked = st.session_state.get("correction_clicked")
+    last_message_dict = st.session_state.messages[-1]
 
+    last_message_content = last_message_dict["content"][0]["text"]
 
     if correction_clicked:
         # Use form to capture user input on Enter or Submit
         with st.form(key=f"correction_form-{st.session_state.correction_widget_key}"):
             user_correction = st.text_area(
                 label="Enter your correction",
+                value=last_message_content,
                 height=None,
                 max_chars=None,
                 key=f"correction-{st.session_state.correction_widget_key}",
@@ -285,6 +289,6 @@ def show():
         pass
 
     # when the feedback and correction buttons are shown it runs their scripts to react to a change
-    if st.session_state.give_feedback and st.session_state.give_correction:
+    if st.session_state.give_feedback and st.session_state.give_correction and st.session_state.messages:
         display_feedback()
         add_correction()
