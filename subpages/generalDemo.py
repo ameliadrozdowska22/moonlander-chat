@@ -40,7 +40,7 @@ def add_correction():
     correction_clicked = st.session_state.get("correction_clicked")
     last_message_dict = st.session_state.messages[-1]
 
-    last_message_content = last_message_dict["content"][0]["text"]
+    last_message_content = last_message_dict["content"]
 
     if correction_clicked:
         # Use form to capture user input on Enter or Submit
@@ -66,22 +66,6 @@ def add_correction():
 
     return
 
-def display_sources(sources):
-
-    with st.expander(label= "Sources", expanded=False, icon="📖"):
-                    counter = 0
-                    for source in sources:
-                        counter += 1
-                        file_name = source["file_name"]
-                        page_number = source["page_number"]
-                        chunk_text = source["chunk"]
-                        if page_number == None:
-                            st.markdown(f"**{counter}. {file_name}:**")
-                        else: 
-                            st.markdown(f"**{counter}. {file_name} - page {(int(page_number))}:**")
-                        st.markdown(chunk_text) 
-    return 
-
 
 def display_feedback():
 
@@ -105,7 +89,7 @@ def manage_chat_history(chat_input):
     # Add the user message to the chat history
     text_message = {
         "role": "user",
-        "content": [{"type": "text", "text": chat_input}]
+        "content": chat_input
     }
     st.session_state.messages.append(text_message)
     
@@ -132,12 +116,12 @@ def chat_messages_layout(chat_input):
     with st.chat_message("user"):
         st.markdown(chat_input)
 
-    # display the response and a source from a model
+    # display the response from a model
     with st.chat_message("assistant"):
         try:
             conv_memory = manage_chat_history(chat_input)
             print(context)
-            response, sources, trace_id = generate_response(api_token=token, key_input=KEY, conv_memory=conv_memory, context=context)
+            response, trace_id = generate_response(api_token=token, key_input=KEY, conv_memory=conv_memory, context=context)
 
             st.markdown(response)
 
@@ -151,13 +135,10 @@ def chat_messages_layout(chat_input):
             st.session_state.give_correction = True
             st.session_state.correction_widget_key += 1
 
-            if sources:
-                display_sources(sources)
-
             # Append the model response in the message history
             st.session_state.messages.append({
                 "role": "assistant",
-                "content": [{"type": "text", "text": response}]
+                "content": response
             })
 
         except APIError as e:
@@ -180,11 +161,8 @@ def chat_manager(chat_input):
 
     # Display chat messages from history on app rerun
     for message in st.session_state.messages:
-        # Check if the message content has a type of 'text'
-        for content in message["content"]:
-                if content["type"] == "text":
-                    with st.chat_message(message["role"]):
-                        st.markdown(content["text"])
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
 
     try:
         # check if the token and key were given to procede with the invoke
